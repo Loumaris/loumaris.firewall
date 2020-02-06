@@ -1,0 +1,53 @@
+---
+- name: Install packages for ufw
+  become: true
+  apt:
+    name:
+      - ufw
+    state: present
+    autoclean: yes
+
+# we need to allow first port 22, if we do it after enabling ufw
+# the access is dropped and you have no chance to reach the node.
+- name: allow ssh with limits
+  ufw:
+    rule: limit
+    port: ssh
+    proto: tcp
+
+- name: Allow anything and enable UFW
+  ufw:
+    state: enabled
+    direction: incoming
+    policy: deny
+
+# This iterates over any host defined in a playbook's <env>.inventory.yml
+# setting the rule: 
+# 
+# Allow ipv4 traffic from every host in inventory to this host 
+# (being provisioned by ansible)
+- name: allow host-to-host communication for ipv4
+  ufw:
+    rule: allow
+    from_ip: "{{ hostvars[item]['ansible_default_ipv4']['address'] }}"
+    to_ip: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+  loop: "{{ query('inventory_hostnames', 'all') }}"
+
+# Same logic as above applied to ipv6 (which are gathered early in ansible run)
+- name: allow host-to-host communication for ipv6
+  ufw:
+    rule: allow
+    from_ip: "{{ hostvars[item]['ansible_default_ipv6']['address']  }}"
+    to_ip: "{{ hostvars[inventory_hostname]['ansible_default_ipv6']['address'] }}"
+  loop: "{{ query('inventory_hostnames', 'all') }}"
+
+- name: Allow some ports to be opened
+  ufw:
+    comment: "{{ item.proto | default('tcp') }}_{{ item.port }}"
+    rule: "{{ item.rule }}"
+    proto: "{{ item.proto | default('tcp') }}"
+    port: "{{ item.port }}"
+    from: "{{ item.from | default('any') }}"
+  with_items:
+    - "{{ firewall_rules }}"
+  when: firewall_rules | length > 0

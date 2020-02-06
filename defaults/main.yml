@@ -1,0 +1,4 @@
+---
+# defaults file for loumaris.firewall
+
+firewall_rules: []
