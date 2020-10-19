@@ -27,6 +27,7 @@
 # Allow ipv4 traffic from every host in inventory to this host 
 # (being provisioned by ansible)
 - name: allow host-to-host communication for ipv4
+  when: enable_ip_v4
   ufw:
     rule: allow
     from_ip: "{{ hostvars[item]['ansible_default_ipv4']['address'] }}"
@@ -35,6 +36,7 @@
 
 # Same logic as above applied to ipv6 (which are gathered early in ansible run)
 - name: allow host-to-host communication for ipv6
+  when: enable_ip_v6
   ufw:
     rule: allow
     from_ip: "{{ hostvars[item]['ansible_default_ipv6']['address']  }}"

@@ -2,3 +2,5 @@
 # defaults file for loumaris.firewall
 
 firewall_rules: []
+enable_ip_v4: true
+enable_ip_v6: true
